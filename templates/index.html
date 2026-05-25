@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Config Format Converter</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg: #F9FAFB;
+            --surface: #FFFFFF;
+            --border: #E5E7EB;
+            --text: #111827;
+            --text-secondary: #4B5563;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem 0;
+            color: var(--primary);
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .toolbar {
+            background-color: var(--surface);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        select, input[type="text"] {
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--border);
+            background-color: var(--surface);
+            font-size: 0.875rem;
+            outline: none;
+        }
+        
+        input[type="text"] {
+            width: 120px;
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .arrow {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .editor-container {
+            display: flex;
+            gap: 2rem;
+            height: calc(100vh - 350px);
+            min-height: 400px;
+        }
+
+        .editor-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--surface);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .editor-header {
+            background-color: #F3F4F6;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            resize: none;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        .error-message {
+            color: #DC2626;
+            font-size: 0.875rem;
+            padding: 1rem;
+            display: none;
+            background-color: #FEF2F2;
+            border-bottom: 1px solid #F87171;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+        }
+        
+        .inputs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            width: 100%;
+        }
+        .inputs-grid .control-group {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+        .inputs-grid input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Drag and Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: border-color 0.2s;
+            margin-bottom: 1rem;
+            background-color: #f8fafc;
+        }
+        .drop-zone.dragover {
+            border-color: var(--primary);
+            background-color: #eef2ff;
+        }
+        .file-list {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            background: var(--surface);
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.25rem;
+            align-items: center;
+        }
+        .file-item .remove-file {
+            color: #DC2626;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Config Format Converter</h1>
+        <p>Convert and manage your configuration files with ease.</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('basic')">Basic Conversion</div>
+        <div class="tab" onclick="switchTab('helm')">Helm Values Refactor</div>
+        <div class="tab" onclick="switchTab('builder')">Helm Values Builder</div>
+    </div>
+
+    <div id="error_banner" class="error-message"></div>
+
+    <!-- Basic Conversion Tab -->
+    <div id="tab_basic" class="tab-content active">
+        <div class="toolbar">
+            <div class="control-group">
+                <label for="input_format">Input Format:</label>
+                <select id="input_format">
+                    <option value="yaml">YAML</option>
+                    <option value="json">JSON</option>
+                    <option value="xml">XML</option>
+                    <option value="properties">Properties</option>
+                </select>
+            </div>
+            <span class="arrow">&rarr;</span>
+            <div class="control-group">
+                <label for="output_format">Output Format:</label>
+                <select id="output_format">
+                    <option value="yaml">YAML</option>
+                    <option value="json">JSON</option>
+                    <option value="xml">XML</option>
+                    <option value="properties">Properties</option>
+                    <option value="json_stringified">JSON Stringified</option>
+                </select>
+            </div>
+            <div style="width: 1px; height: 24px; background-color: var(--border); margin: 0 0.5rem;"></div>
+            <label class="checkbox-label">
+                <input type="checkbox" id="add_placeholders" checked>
+                Add Env Placeholders
+            </label>
+            <button class="btn" style="background-color: #10B981;" onclick="validateBasic()">Validate</button>
+            <button class="btn" onclick="convertBasic()">Convert</button>
+        </div>
+
+        <div class="editor-container">
+            <div class="editor-pane">
+                <div class="editor-header">Input Data</div>
+                <textarea id="input_text_basic" spellcheck="false" placeholder="Paste your YAML or Properties text here..."></textarea>
+            </div>
+            <div class="editor-pane">
+                <div class="editor-header">
+                    Converted Output
+                    <button onclick="copyOutput('output_text_basic')" style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 0.75rem; font-weight: 600;">COPY</button>
+                </div>
+                <textarea id="output_text_basic" spellcheck="false" readonly placeholder="Your converted output will appear here..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Helm Values Refactor Tab -->
+    <div id="tab_helm" class="tab-content">
+        <div class="toolbar">
+            <div style="width: 100%; margin-bottom: 0.5rem;">
+                <strong style="font-size: 0.875rem;">Default Base Variables:</strong>
+                <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">Provide default values to inject into extraEnv. If left blank, values will be automatically extracted from your YAML.</p>
+            </div>
+            <div class="inputs-grid">
+                <div class="control-group">
+                    <label>DB Type</label>
+                    <input type="text" id="helm_db_type" placeholder="e.g. mariadb">
+                </div>
+                <div class="control-group">
+                    <label>DB IP</label>
+                    <input type="text" id="helm_db_ip" placeholder="e.g. 10.0.6.97">
+                </div>
+                <div class="control-group">
+                    <label>DB Port</label>
+                    <input type="text" id="helm_db_port" placeholder="e.g. 3306">
+                </div>
+                <div class="control-group">
+                    <label>Redis IP</label>
+                    <input type="text" id="helm_redis_ip" placeholder="e.g. 10.0.6.97">
+                </div>
+                <div class="control-group">
+                    <label>Redis Port</label>
+                    <input type="text" id="helm_redis_port" placeholder="e.g. 6379">
+                </div>
+                <div class="control-group">
+                    <label>Kafka IP</label>
+                    <input type="text" id="helm_kafka_ip" placeholder="e.g. 10.0.6.90">
+                </div>
+                <div class="control-group">
+                    <label>Kafka Port</label>
+                    <input type="text" id="helm_kafka_port" placeholder="e.g. 9092">
+                </div>
+                <div class="control-group">
+                    <label>Base Path</label>
+                    <input type="text" id="helm_base_path" placeholder="e.g. /app/config">
+                </div>
+            </div>
+            <div style="width: 100%; display: flex; justify-content: flex-end; margin-top: 1rem;">
+                <button class="btn" onclick="convertHelm()">Refactor Helm Values</button>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <div class="editor-pane">
+                <div class="editor-header">Helm values.yaml</div>
+                <textarea id="input_text_helm" spellcheck="false" placeholder="Paste your entire values.yaml here..."></textarea>
+            </div>
+            <div class="editor-pane">
+                <div class="editor-header">
+                    Refactored values.yaml
+                    <button onclick="copyOutput('output_text_helm')" style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 0.75rem; font-weight: 600;">COPY</button>
+                </div>
+                <textarea id="output_text_helm" spellcheck="false" readonly placeholder="Your refactored output will appear here..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Helm Values Builder Tab -->
+    <div id="tab_builder" class="tab-content">
+        <div class="toolbar" style="flex-direction: column; align-items: stretch;">
+            <div class="inputs-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                <div class="control-group">
+                    <label>Service Name</label>
+                    <input type="text" id="build_service_name" placeholder="e.g. pcrf-new-service">
+                </div>
+                <div class="control-group">
+                    <label>Image Tag</label>
+                    <input type="text" id="build_image_tag" placeholder="e.g. 1.0.30-dev">
+                </div>
+                <div class="control-group">
+                    <label>Replica Count</label>
+                    <input type="number" id="build_replica_count" value="0" style="width: 100%; padding: 0.5rem; border-radius: 0.25rem; border: 1px solid var(--border);">
+                </div>
+                <div class="control-group">
+                    <label>Rollout Strategy</label>
+                    <select id="build_rollout_strategy" style="width: 100%; padding: 0.5rem; border-radius: 0.25rem; border: 1px solid var(--border);">
+                        <option value="None">None</option>
+                        <option value="Canary">Canary</option>
+                        <option value="Blue-Green">Blue-Green</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Resources (Req CPU/Mem)</label>
+                    <div style="display:flex; gap:0.25rem;">
+                        <input type="text" id="build_res_req_cpu" value="500m">
+                        <input type="text" id="build_res_req_mem" value="1Gi">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Resources (Lim CPU/Mem)</label>
+                    <div style="display:flex; gap:0.25rem;">
+                        <input type="text" id="build_res_lim_cpu" value="1500m">
+                        <input type="text" id="build_res_lim_mem" value="1Gi">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 2rem; margin-top: 1rem;">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="build_persistence_enabled"> Enable Persistence Volume
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="build_ingress_enabled"> Enable Ingress
+                </label>
+            </div>
+
+            <div id="canary_options" style="display:none; margin-top: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem;">
+                <strong>Canary Options</strong>
+                <div class="inputs-grid" style="margin-top: 0.5rem;">
+                    <div class="control-group">
+                        <label>Virtual Service Name</label>
+                        <input type="text" id="build_canary_vs" placeholder="pcrf-api">
+                    </div>
+                    <div class="control-group">
+                        <label>Route Name</label>
+                        <input type="text" id="build_canary_route" placeholder="e.g. pcrf-spr">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <div id="drop_zone" class="drop-zone">
+                    Drag and drop configuration files here (e.g. application.yml, producer.properties)<br>
+                    <small>or click to select files</small>
+                    <input type="file" id="file_input" multiple style="display:none;">
+                </div>
+                <div id="file_list" class="file-list"></div>
+            </div>
+
+            <div style="width: 100%; display: flex; justify-content: flex-end; margin-top: 1rem;">
+                <button class="btn" onclick="buildHelm()">Generate values.yaml</button>
+            </div>
+        </div>
+
+        <div class="editor-container" style="height: auto;">
+            <div class="editor-pane">
+                <div class="editor-header">
+                    Generated values.yaml
+                    <button onclick="copyOutput('output_text_build')" style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 0.75rem; font-weight: 600;">COPY</button>
+                </div>
+                <textarea id="output_text_build" style="height: 500px;" spellcheck="false" readonly placeholder="Your generated output will appear here..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab_' + tabId).classList.add('active');
+            document.getElementById('error_banner').style.display = 'none';
+        }
+
+        function showError(msg, isSuccess=false, suggestion=null) {
+            const banner = document.getElementById('error_banner');
+            banner.innerHTML = msg + (suggestion ? `<br><small style="color: #4B5563;"><b>Suggestion:</b> ${suggestion}</small>` : '');
+            
+            if (isSuccess) {
+                banner.style.color = '#059669';
+                banner.style.backgroundColor = '#D1FAE5';
+                banner.style.borderBottom = '1px solid #34D399';
+            } else {
+                banner.style.color = '#DC2626';
+                banner.style.backgroundColor = '#FEF2F2';
+                banner.style.borderBottom = '1px solid #F87171';
+            }
+            banner.style.display = 'block';
+        }
+
+        let droppedFiles = [];
+
+        document.getElementById('build_rollout_strategy').addEventListener('change', function(e) {
+            document.getElementById('canary_options').style.display = e.target.value === 'Canary' ? 'block' : 'none';
+        });
+
+        const dropZone = document.getElementById('drop_zone');
+        const fileInput = document.getElementById('file_input');
+        
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFiles);
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles({ target: { files: e.dataTransfer.files } });
+        });
+
+        function handleFiles(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    droppedFiles.push({ filename: file.name, content: event.target.result });
+                    renderFileList();
+                };
+                reader.readAsText(file);
+            });
+            fileInput.value = '';
+        }
+
+        function renderFileList() {
+            const list = document.getElementById('file_list');
+            list.innerHTML = '';
+            droppedFiles.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `<span>${file.filename}</span><span class="remove-file" onclick="removeFile(${index})">&times;</span>`;
+                list.appendChild(div);
+            });
+        }
+
+        function removeFile(index) {
+            droppedFiles.splice(index, 1);
+            renderFileList();
+        }
+
+        async function buildHelm() {
+            const payload = {
+                serviceName: document.getElementById('build_service_name').value || 'my-service',
+                imageTag: document.getElementById('build_image_tag').value || '1.0.0',
+                replicaCount: document.getElementById('build_replica_count').value,
+                rolloutStrategy: document.getElementById('build_rollout_strategy').value,
+                persistenceEnabled: document.getElementById('build_persistence_enabled').checked,
+                ingressEnabled: document.getElementById('build_ingress_enabled').checked,
+                resourcesReqCpu: document.getElementById('build_res_req_cpu').value,
+                resourcesReqMem: document.getElementById('build_res_req_mem').value,
+                resourcesLimCpu: document.getElementById('build_res_lim_cpu').value,
+                resourcesLimMem: document.getElementById('build_res_lim_mem').value,
+                rolloutCanary: {
+                    virtualServiceName: document.getElementById('build_canary_vs').value || 'pcrf-api',
+                    routeName: document.getElementById('build_canary_route').value || document.getElementById('build_service_name').value
+                },
+                files: droppedFiles
+            };
+
+            document.getElementById('error_banner').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/build-helm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('output_text_build').value = result.output_text;
+                    showError("values.yaml generated successfully!", true);
+                } else {
+                    showError("Error: " + result.error);
+                }
+            } catch (err) {
+                showError("Error connecting to the server: " + err.message);
+            }
+        }
+
+        async function validateBasic() {
+            const inputText = document.getElementById('input_text_basic').value;
+            const inputFormat = document.getElementById('input_format').value;
+            
+            document.getElementById('error_banner').style.display = 'none';
+
+            if (!inputText.trim()) {
+                showError("Please provide some input text to validate.", false);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input_text: inputText,
+                        input_format: inputFormat
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.valid) {
+                    showError(result.message, true);
+                } else {
+                    showError('Validation failed: ' + result.message, false, result.suggestion);
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message, false);
+            }
+        }
+
+        async function convertBasic() {
+            const inputText = document.getElementById('input_text_basic').value;
+            const inputFormat = document.getElementById('input_format').value;
+            const outputFormat = document.getElementById('output_format').value;
+            const addPlaceholders = document.getElementById('add_placeholders').checked;
+            const outputText = document.getElementById('output_text_basic');
+            
+            document.getElementById('error_banner').style.display = 'none';
+
+            if (!inputText.trim()) {
+                showError("Please provide some input text to convert.");
+                return;
+            }
+
+            outputText.value = 'Converting...';
+
+            try {
+                const response = await fetch('/api/convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input_text: inputText,
+                        input_format: inputFormat,
+                        output_format: outputFormat,
+                        add_placeholders: addPlaceholders
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    outputText.value = result.output_text;
+                } else {
+                    outputText.value = '';
+                    showError('Conversion failed: ' + result.error);
+                }
+            } catch (err) {
+                outputText.value = '';
+                showError('Network error: ' + err.message);
+            }
+        }
+
+        async function convertHelm() {
+            const inputText = document.getElementById('input_text_helm').value;
+            const outputText = document.getElementById('output_text_helm');
+            
+            document.getElementById('error_banner').style.display = 'none';
+
+            if (!inputText.trim()) {
+                showError("Please paste a values.yaml file.");
+                return;
+            }
+
+            const userInputs = {
+                'DB_TYPE': document.getElementById('helm_db_type').value.trim(),
+                'DB_IP': document.getElementById('helm_db_ip').value.trim(),
+                'DB_PORT': document.getElementById('helm_db_port').value.trim(),
+                'REDIS_IP': document.getElementById('helm_redis_ip').value.trim(),
+                'REDIS_PORT': document.getElementById('helm_redis_port').value.trim(),
+                'KAFKA_IP': document.getElementById('helm_kafka_ip').value.trim(),
+                'KAFKA_PORT': document.getElementById('helm_kafka_port').value.trim(),
+                'BASE_PATH': document.getElementById('helm_base_path').value.trim()
+            };
+
+            outputText.value = 'Refactoring...';
+
+            try {
+                const response = await fetch('/api/helm-convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input_text: inputText,
+                        user_inputs: userInputs
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    outputText.value = result.output_text;
+                } else {
+                    outputText.value = '';
+                    showError('Refactoring failed: ' + result.error);
+                }
+            } catch (err) {
+                outputText.value = '';
+                showError('Network error: ' + err.message);
+            }
+        }
+
+        function copyOutput(id) {
+            const outputText = document.getElementById(id);
+            if (outputText.value) {
+                outputText.select();
+                document.execCommand('copy');
+            }
+        }
+    </script>
+</body>
+</html>
